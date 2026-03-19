@@ -1,15 +1,11 @@
 {
-  "name": "bot-hydra-discloud",
+  "name": "bot-hydra",
   "version": "1.0.0",
-  "description": "Bot de recrutamento Hydra - plano Gold Discloud",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "build": "npm install -g npm"
+    "start": "node index.js"
   },
   "dependencies": {
-    "discord.js": "^14.25.1",
-    "express": "^4.19.2"
-  },
-  "private": false
+    "discord.js": "^14.25.1"
+  }
 }
