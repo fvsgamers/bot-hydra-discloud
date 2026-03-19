@@ -1,17 +1,15 @@
 {
   "name": "bot-hydra-discloud",
+  "version": "1.0.0",
   "description": "Bot de recrutamento Hydra - plano Gold Discloud",
-  "start": "node index.js",
-  "build": "npm install",
-  "env": {
-    "TOKEN": "SEU_TOKEN_DO_BOT",
-    "PORT": "3000"
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "build": "npm install"
   },
-  "keepAlive": true,
-  "private": false,
-  "memory": "1GB",
-  "cpu": "1vCPU",
-  "disk": "5GB",
-  "plan": "gold",
-  "autoRestart": true
+  "dependencies": {
+    "discord.js": "^14.25.1",
+    "express": "^4.19.2"
+  },
+  "private": false
 }
