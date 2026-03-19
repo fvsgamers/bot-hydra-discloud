@@ -1,50 +1,57 @@
-//require('dotenv').config();
+// index.js
+//require('dotenv').config(); // lê o .env local (só para testes offline)
+
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
 const fs = require('fs');
-const config = require('./config.json');
+const config = require('./config.json'); // IDs e cargos do bot
 const express = require('express');
 
 const app = express();
 
-// ===== Keep-Alive (opcional no Discloud pago) =====
-app.get('/', (req, res) => res.send('Bot online!'));
+// ======== KEEP-ALIVE COM EXPRESS ========
+app.get('/', (req, res) => {
+  res.send('Bot online!');
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🌐 Web server online na porta ${PORT}`));
 
-// ===== Criar cliente do Discord =====
+// ======== CLIENT DO DISCORD ========
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers]
 });
 
 client.commands = new Collection();
 
-// ===== Carregar comandos =====
+// ======== CARREGAR COMANDOS ========
 const commandFiles = fs.readdirSync('./commands').filter(f => f.endsWith('.js'));
 for (const file of commandFiles) {
   const command = require(`./commands/${file}`);
   client.commands.set(command.data.name, command);
 }
 
-// ===== Carregar eventos =====
+// ======== CARREGAR EVENTOS ========
 const eventFiles = fs.readdirSync('./events');
 for (const file of eventFiles) {
   require(`./events/${file}`)(client);
 }
 
-// ===== Tratamento de erros =====
-process.on('unhandledRejection', console.error);
-client.on('error', console.error);
+// ======== TRATAMENTO DE ERROS ========
+process.on('unhandledRejection', (error) => console.error('Unhandled Rejection:', error));
+client.on('error', (error) => console.error('Client Error:', error));
 
-// ===== Login do bot =====
+// ======== CHECAR TOKEN ========
 if (!process.env.TOKEN) {
-  console.error('❌ TOKEN não definido!');
+  console.error('❌ TOKEN não definido! Configure o environment ou o .env');
   process.exit(1);
 }
 
+// ======== LOGIN DO BOT ========
 client.login(process.env.TOKEN)
   .then(() => console.log('🔑 Tentando logar o bot...'))
   .catch(err => console.error('❌ Erro ao logar o bot:', err));
 
+// ======== LOG READY ========
 client.once('ready', () => {
   console.log(`✅ Bot online como ${client.user.tag}`);
 });
