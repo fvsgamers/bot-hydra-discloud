@@ -51,6 +51,12 @@ module.exports = (client) => {
               .setCustomId('telefone')
               .setLabel('Telefone')
               .setStyle(TextInputStyle.Short)
+          ),
+          new ActionRowBuilder().addComponents(
+            new TextInputBuilder()
+              .setCustomId('vulgo')
+              .setLabel('Vulgo')
+              .setStyle(TextInputStyle.Short)
           )
         );
 
