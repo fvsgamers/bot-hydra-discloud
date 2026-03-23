@@ -1,32 +1,39 @@
+require('dotenv').config();
+
+console.log('ENV TOKEN:', process.env.TOKEN);
+
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
 const fs = require('fs');
 const config = require('./config.json');
 
-// ===== CLIENT =====
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers]
 });
 
 client.commands = new Collection();
 
-// ===== CARREGAR COMANDOS =====
+// comandos
 const commandFiles = fs.readdirSync('./commands').filter(f => f.endsWith('.js'));
 for (const file of commandFiles) {
   const command = require(`./commands/${file}`);
   client.commands.set(command.data.name, command);
 }
 
-// ===== CARREGAR EVENTOS =====
-const eventFiles = fs.readdirSync('./events').filter(f => f.endsWith('.js'));
+// eventos
+const eventFiles = fs.readdirSync('./events');
 for (const file of eventFiles) {
   require(`./events/${file}`)(client);
 }
 
-// ===== ERROS =====
-process.on('unhandledRejection', (err) => console.error('❌ Erro:', err));
-client.on('error', (err) => console.error('❌ Client error:', err));
+process.on('unhandledRejection', (error) => {
+  console.error('Erro não tratado:', error);
+});
 
-// ===== TOKEN =====
+client.on('error', (error) => {
+  console.error('Erro do client:', error);
+});
+
+// 🔥 TOKEN CORRETO
 const token = process.env.TOKEN;
 
 if (!token) {
@@ -34,6 +41,6 @@ if (!token) {
   process.exit(1);
 }
 
-// ===== LOGIN =====
 console.log('🔑 Iniciando bot...');
+console.log('TOKEN:', process.env.TOKEN);
 client.login(token);
