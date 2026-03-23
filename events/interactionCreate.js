@@ -196,33 +196,6 @@ module.exports = (client) => {
           return interaction.reply({ content: '✅ Ticket criado!', flags: 64 });
         }
       }
-
-     // ===== REGISTRO CENTRAL =====
-const canalRegistro = interaction.guild.channels.cache.get('1485727631067451634');
-
-if (canalRegistro) {
-
-  const telefone = getField('Telefone');
-  const nome = getField('Nome');
-
-  const linha = `| ----------------------------------------------------------------|`;
-
-  const mensagem = `
-📜 **Batizado**
-
-👤 **Nome:** ${nome}
-🕶️ **Vulgo:** ${vulgo}
-🆔 **ID:** ${id}
-📞 **Telefone:** ${telefone}
-🏷️ **Cargo:** ${sistema.nome}
-🧑‍💼 **Aprovado por:** ${interaction.user.tag}
-
-${linha}
-`;
-
-  canalRegistro.send(mensagem);
-}
-
 // ===== EMBED FORMATADO =====
 const embedRegistro = new EmbedBuilder()
   .setTitle('📜 Batizado')
@@ -279,7 +252,32 @@ await canalRegistro.send({ embeds: [embedRegistro] });
 
         await membro.roles.add(cargos);
         await membro.roles.remove(config.cargoRemover);
+        // ===== REGISTRO CENTRAL =====
+const canalRegistro = interaction.guild.channels.cache.get('1485727631067451634');
 
+if (canalRegistro) {
+
+  const telefone = getField('Telefone');
+  const nome = getField('Nome');
+
+  const linha = `| ----------------------------------------------------------------|`;
+
+  const mensagem = `
+📜 **Batizado**
+
+👤 **Nome:** ${nome}
+🕶️ **Vulgo:** ${vulgo}
+🆔 **ID:** ${id}
+📞 **Telefone:** ${telefone}
+🏷️ **Cargo:** ${sistema.nome}
+🧑‍💼 **Aprovado por:** ${interaction.user.tag}
+
+${linha}
+`;
+
+  canalRegistro.send(mensagem);
+}
+        
         const log = interaction.guild.channels.cache.get(config.logAprovacoes);
         if (log) {
           log.send(`✅ ${membro.user.tag} aprovado por ${interaction.user.tag}\nCargo: ${sistema.nome}\nApelido: ${nickname}`);
