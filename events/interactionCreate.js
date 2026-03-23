@@ -199,43 +199,53 @@ module.exports = (client) => {
       }
 
       // ===== APROVAR =====
-      if (interaction.isButton() && interaction.customId.startsWith('aprovar')) {
+      // ===== APROVAR =====
+if (interaction.isButton() && interaction.customId.startsWith('aprovar')) {
 
-        const temPermissao = interaction.member.roles.cache.some(role =>
-          config.cargosRecrutadores.includes(role.id)
-        );
+  const temPermissao = interaction.member.roles.cache.some(role =>
+    config.cargosRecrutadores.includes(role.id)
+  );
 
-        if (!temPermissao) {
-          return interaction.reply({
-            content: '❌ Sem permissão.',
-            flags: 64
-          });
-        }
+  if (!temPermissao) {
+    return interaction.reply({
+      content: '❌ Sem permissão.',
+      flags: 64
+    });
+  }
 
-        await interaction.deferUpdate();
+  await interaction.deferUpdate();
 
-        const cargoEscolhido = interaction.customId.split('_')[1];
-        const membro = interaction.guild.members.cache.get(interaction.channel.topic);
+  const cargoEscolhido = interaction.customId.split('_')[1];
+  const membro = interaction.guild.members.cache.get(interaction.channel.topic);
 
-        if (!membro) return;
+  if (!membro) return;
 
-        await membro.roles.add(config.cargoAprovado);
-        await membro.roles.remove(config.cargoRemover);
+  // 🔥 PEGAR DADOS DO EMBED
+  const embed = interaction.message.embeds[0];
+  const nome = embed.data.fields.find(f => f.name === 'Nome')?.value || 'SemNome';
+  const id = embed.data.fields.find(f => f.name === 'ID')?.value || '000';
 
-        await membro.roles.add(cargoEscolhido);
+  // 🔥 DEFINIR APELIDO
+  await membro.setNickname(`${nome} | ${id}`).catch(() => {});
 
-        const log = interaction.guild.channels.cache.get(config.logAprovacoes);
-        if (log) {
-          log.send(`✅ ${membro.user.tag} aprovado por ${interaction.user.tag}`);
-        }
+  // 🔥 CARGOS
+  await membro.roles.add(config.cargoAprovado);
+  await membro.roles.remove(config.cargoRemover);
+  await membro.roles.add(cargoEscolhido);
 
-        await interaction.message.edit({
-          content: '✅ Aprovado!',
-          components: []
-        });
+  // 🔥 LOG
+  const log = interaction.guild.channels.cache.get(config.logAprovacoes);
+  if (log) {
+    log.send(`✅ ${membro.user.tag} aprovado por ${interaction.user.tag}`);
+  }
 
-        setTimeout(() => interaction.channel.delete(), 5000);
-      }
+  await interaction.message.edit({
+    content: '✅ Aprovado!',
+    components: []
+  });
+
+  setTimeout(() => interaction.channel.delete(), 5000);
+}
 
       // ===== REPROVAR =====
       if (interaction.isButton() && interaction.customId === 'reprovar') {
