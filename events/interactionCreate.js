@@ -104,14 +104,21 @@ module.exports = (client) => {
             .addOptions(options)
         );
 
+        // ===== CARGOS DINÂMICOS PELO CONFIG =====
+        const cargosOptions = Object.entries(config.cargosSistema)
+          .map(([id, data]) => {
+            const role = interaction.guild.roles.cache.get(id);
+            return {
+              label: role ? role.name : data.nome,
+              value: id
+            };
+          });
+
         const selectCargo = new ActionRowBuilder().addComponents(
           new StringSelectMenuBuilder()
             .setCustomId('select_cargo')
             .setPlaceholder('Selecione o cargo')
-            .addOptions([
-              { label: 'Membro', value: config.cargoMembro },
-              { label: 'Aviãozinho', value: config.cargoAviaozinho }
-            ])
+            .addOptions(cargosOptions)
         );
 
         return interaction.reply({
@@ -156,6 +163,8 @@ module.exports = (client) => {
             ]
           });
 
+          const role = interaction.guild.roles.cache.get(dados.cargo);
+
           const embed = new EmbedBuilder()
             .setTitle('📋 Novo Registro')
             .addFields(
@@ -163,7 +172,7 @@ module.exports = (client) => {
               { name: 'Vulgo', value: dados.vulgo },
               { name: 'ID', value: dados.id },
               { name: 'Telefone', value: dados.telefone },
-              { name: 'Cargo', value: `<@&${dados.cargo}>` }
+              { name: 'Cargo', value: role ? role.name : dados.cargo }
             );
 
           const botoes = new ActionRowBuilder().addComponents(
@@ -185,7 +194,7 @@ module.exports = (client) => {
         }
       }
 
-      // ===== APROVAR (DINÂMICO) =====
+      // ===== APROVAR =====
       if (interaction.isButton() && interaction.customId.startsWith('aprovar')) {
 
         const temPermissao = interaction.member.roles.cache.some(role =>
@@ -217,11 +226,15 @@ module.exports = (client) => {
 
         await membro.setNickname(nickname).catch(() => {});
 
-        await membro.roles.add(config.cargoAprovado);
-        await membro.roles.remove(config.cargoRemover);
-        await membro.roles.add(cargoEscolhido);
+        // aplica todos os cargos de uma vez
+        const cargos = [
+          cargoEscolhido,
+          config.cargoAprovado,
+          ...(sistema.extra || [])
+        ];
 
-        if (sistema.extra) await membro.roles.add(sistema.extra);
+        await membro.roles.add(cargos);
+        await membro.roles.remove(config.cargoRemover);
 
         const log = interaction.guild.channels.cache.get(config.logAprovacoes);
         if (log) {
@@ -250,10 +263,10 @@ module.exports = (client) => {
       }
 
     } catch (err) {
-      console.error('💥 ERRO:', err);
+      console.error('💥 ERRO DETALHADO:', err);
 
       if (interaction && !interaction.replied) {
-        interaction.reply({ content: '❌ Erro.', flags: 64 }).catch(() => {});
+        interaction.reply({ content: `❌ Erro: ${err.message}`, flags: 64 }).catch(() => {});
       }
     }
   });
