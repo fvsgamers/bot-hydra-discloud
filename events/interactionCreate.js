@@ -197,24 +197,31 @@ module.exports = (client) => {
         }
       }
 
-      // ===== CANAL DE REGISTRO PERMANENTE =====
-const nomeRegistro = `batizado-${dados.vulgo.toLowerCase()}`;
+     // ===== REGISTRO CENTRAL =====
+const canalRegistro = interaction.guild.channels.cache.get('1485727631067451634');
 
-const canalRegistro = await interaction.guild.channels.create({
-  name: nomeRegistro,
-  type: ChannelType.GuildText,
-  parent: config.categoriaRegistros,
-  permissionOverwrites: [
-    {
-      id: interaction.guild.id,
-      deny: [PermissionsBitField.Flags.ViewChannel]
-    },
-    ...config.cargosRecrutadores.map(c => ({
-      id: c,
-      allow: [PermissionsBitField.Flags.ViewChannel]
-    }))
-  ]
-});
+if (canalRegistro) {
+
+  const telefone = getField('Telefone');
+  const nome = getField('Nome');
+
+  const linha = `| ----------------------------------------------------------------|`;
+
+  const mensagem = `
+📜 **Batizado**
+
+👤 **Nome:** ${nome}
+🕶️ **Vulgo:** ${vulgo}
+🆔 **ID:** ${id}
+📞 **Telefone:** ${telefone}
+🏷️ **Cargo:** ${sistema.nome}
+🧑‍💼 **Aprovado por:** ${interaction.user.tag}
+
+${linha}
+`;
+
+  canalRegistro.send(mensagem);
+}
 
 // ===== EMBED FORMATADO =====
 const embedRegistro = new EmbedBuilder()
