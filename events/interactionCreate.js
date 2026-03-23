@@ -174,6 +174,7 @@ module.exports = (client) => {
             .setTitle('📋 Novo Registro')
             .addFields(
               { name: 'Nome', value: dados.nome },
+              { name: 'Vulgo', value: dados.vulgo },
               { name: 'ID', value: dados.id },
               { name: 'Telefone', value: dados.telefone },
               { name: 'Cargo', value: `<@&${dados.cargo}>` }
