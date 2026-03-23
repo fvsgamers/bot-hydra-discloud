@@ -197,6 +197,40 @@ module.exports = (client) => {
         }
       }
 
+      // ===== CANAL DE REGISTRO PERMANENTE =====
+const nomeRegistro = `batizado-${dados.vulgo.toLowerCase()}`;
+
+const canalRegistro = await interaction.guild.channels.create({
+  name: nomeRegistro,
+  type: ChannelType.GuildText,
+  parent: config.categoriaRegistros,
+  permissionOverwrites: [
+    {
+      id: interaction.guild.id,
+      deny: [PermissionsBitField.Flags.ViewChannel]
+    },
+    ...config.cargosRecrutadores.map(c => ({
+      id: c,
+      allow: [PermissionsBitField.Flags.ViewChannel]
+    }))
+  ]
+});
+
+// ===== EMBED FORMATADO =====
+const embedRegistro = new EmbedBuilder()
+  .setTitle('📜 Batizado')
+  .setColor('Green')
+  .addFields(
+    { name: '👤 Nome', value: dados.nome },
+    { name: '🕶️ Vulgo', value: dados.vulgo },
+    { name: '🆔 ID', value: dados.id },
+    { name: '📞 Telefone', value: dados.telefone }
+  )
+  .setFooter({ text: `Registrado por ${interaction.user.tag}` })
+  .setTimestamp();
+
+await canalRegistro.send({ embeds: [embedRegistro] });
+
       // ===== APROVAR =====
       if (interaction.isButton() && interaction.customId.startsWith('aprovar')) {
 
