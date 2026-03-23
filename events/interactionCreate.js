@@ -76,11 +76,14 @@ module.exports = (client) => {
         }
 
         // ===== RECRUTADORES =====
+        await interaction.guild.members.fetch(); // 💥 ESSA LINHA RESOLVE
+
         const recrutadores = [];
 
         for (const cargoId of config.cargosRecrutadores) {
           const role = interaction.guild.roles.cache.get(cargoId);
           if (!role) continue;
+
           role.members.forEach(m => recrutadores.push(m));
         }
 
