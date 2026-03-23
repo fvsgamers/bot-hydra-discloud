@@ -99,7 +99,9 @@ module.exports = (client) => {
         }
 
         // salva dados temporários
-        dadosTemp[interaction.user.id] = { nome, id, telefone };
+        const vulgo = interaction.fields.getTextInputValue('vulgo');
+
+        dadosTemp[interaction.user.id] = { nome, id, telefone, vulgo };
 
         const selectRecrutador = new ActionRowBuilder().addComponents(
           new StringSelectMenuBuilder()
@@ -206,7 +208,6 @@ module.exports = (client) => {
       }
 
       // ===== APROVAR =====
-      // ===== APROVAR =====
 if (interaction.isButton() && interaction.customId.startsWith('aprovar')) {
 
   const temPermissao = interaction.member.roles.cache.some(role =>
@@ -227,23 +228,49 @@ if (interaction.isButton() && interaction.customId.startsWith('aprovar')) {
 
   if (!membro) return;
 
-  // 🔥 PEGAR DADOS DO EMBED
+  // ===== PEGAR DADOS DO EMBED =====
   const embed = interaction.message.embeds[0];
-  const nome = embed.data.fields.find(f => f.name === 'Nome')?.value || 'SemNome';
-  const id = embed.data.fields.find(f => f.name === 'ID')?.value || '000';
 
-  // 🔥 DEFINIR APELIDO
-  await membro.setNickname(`${nome} | ${id}`).catch(() => {});
+  const getField = (name) =>
+    embed.data.fields.find(f => f.name === name)?.value || '';
 
-  // 🔥 CARGOS
+  const id = getField('ID');
+  const vulgo = getField('Vulgo');
+
+  // ===== DEFINIR NOME DO CARGO =====
+  let nomeCargo = 'Membro';
+
+  if (cargoEscolhido === config.cargoAviaozinho) {
+    nomeCargo = 'Aviãozinho';
+  }
+
+  // ===== FORMATAR APELIDO =====
+  let nickname = `[${nomeCargo}] ${id} | ${vulgo}`;
+
+  if (nickname.length > 32) {
+    nickname = `[${nomeCargo}] ${vulgo}`.slice(0, 32);
+  }
+
+  await membro.setNickname(nickname).catch(() => {});
+
+  // ===== CARGOS BASE =====
   await membro.roles.add(config.cargoAprovado);
   await membro.roles.remove(config.cargoRemover);
   await membro.roles.add(cargoEscolhido);
 
-  // 🔥 LOG
+  // ===== CARGOS EXTRAS AUTOMÁTICOS =====
+  if (cargoEscolhido === config.cargoMembro) {
+    await membro.roles.add(config.cargoExtraMembro);
+  }
+
+  if (cargoEscolhido === config.cargoAviaozinho) {
+    await membro.roles.add(config.cargoExtraAviao);
+  }
+
+  // ===== LOG =====
   const log = interaction.guild.channels.cache.get(config.logAprovacoes);
   if (log) {
-    log.send(`✅ ${membro.user.tag} aprovado por ${interaction.user.tag}`);
+    log.send(`✅ ${membro.user.tag} aprovado por ${interaction.user.tag}\nApelido: ${nickname}`);
   }
 
   await interaction.message.edit({
