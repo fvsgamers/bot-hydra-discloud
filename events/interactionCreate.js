@@ -26,7 +26,7 @@ module.exports = (client) => {
         return;
       }
 
-      // ===== BOTÃO ABRIR FORM =====
+      // ===== ABRIR FORM =====
       if (interaction.isButton() && interaction.customId === 'abrir_formulario') {
 
         const modal = new ModalBuilder()
@@ -63,24 +63,24 @@ module.exports = (client) => {
         return interaction.showModal(modal);
       }
 
-      // ===== MODAL ENVIADO =====
+      // ===== MODAL =====
       if (interaction.isModalSubmit() && interaction.customId === 'formulario_registro') {
 
         const nome = interaction.fields.getTextInputValue('nome');
         const id = interaction.fields.getTextInputValue('id');
         const telefone = interaction.fields.getTextInputValue('telefone');
+        const vulgo = interaction.fields.getTextInputValue('vulgo');
 
         if (!/^\d+$/.test(id)) {
           return interaction.reply({ content: '❌ ID inválido!', flags: 64 });
         }
 
-        // 🔥 RECRUTADORES VIA CARGOS (SEM FETCH)
+        // ===== RECRUTADORES =====
         const recrutadores = [];
 
         for (const cargoId of config.cargosRecrutadores) {
           const role = interaction.guild.roles.cache.get(cargoId);
           if (!role) continue;
-
           role.members.forEach(m => recrutadores.push(m));
         }
 
@@ -92,14 +92,8 @@ module.exports = (client) => {
         }));
 
         if (options.length === 0) {
-          return interaction.reply({
-            content: '❌ Nenhum recrutador encontrado!',
-            flags: 64
-          });
+          return interaction.reply({ content: '❌ Nenhum recrutador encontrado!', flags: 64 });
         }
-
-        // salva dados temporários
-        const vulgo = interaction.fields.getTextInputValue('vulgo');
 
         dadosTemp[interaction.user.id] = { nome, id, telefone, vulgo };
 
@@ -127,30 +121,23 @@ module.exports = (client) => {
         });
       }
 
-      // ===== SELECT MENUS =====
+      // ===== SELECT =====
       if (interaction.isStringSelectMenu()) {
 
         const dados = dadosTemp[interaction.user.id];
-
         if (!dados) {
-          return interaction.reply({
-            content: '❌ Dados expiraram. Refaça o formulário.',
-            flags: 64
-          });
+          return interaction.reply({ content: '❌ Dados expiraram.', flags: 64 });
         }
 
-        // recrutador
         if (interaction.customId === 'select_recrutador') {
           dados.recrutador = interaction.values[0];
           return interaction.reply({ content: '✅ Recrutador selecionado!', flags: 64 });
         }
 
-        // cargo
         if (interaction.customId === 'select_cargo') {
 
           dados.cargo = interaction.values[0];
 
-          // nome seguro do canal
           const nomeCanal = `registro-${dados.nome.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()}`;
 
           const canal = await interaction.guild.channels.create({
@@ -159,21 +146,12 @@ module.exports = (client) => {
             type: ChannelType.GuildText,
             parent: config.categoriaTickets,
             permissionOverwrites: [
-              {
-                id: interaction.guild.id,
-                deny: [PermissionsBitField.Flags.ViewChannel]
-              },
-              {
-                id: interaction.user.id,
-                allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages]
-              },
-              {
-                id: interaction.client.user.id,
-                allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages]
-              },
+              { id: interaction.guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
+              { id: interaction.user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] },
+              { id: interaction.client.user.id, allow: [PermissionsBitField.Flags.ViewChannel] },
               ...config.cargosRecrutadores.map(c => ({
                 id: c,
-                allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages]
+                allow: [PermissionsBitField.Flags.ViewChannel]
               }))
             ]
           });
@@ -207,79 +185,53 @@ module.exports = (client) => {
         }
       }
 
-      // ===== APROVAR =====
-if (interaction.isButton() && interaction.customId.startsWith('aprovar')) {
+      // ===== APROVAR (DINÂMICO) =====
+      if (interaction.isButton() && interaction.customId.startsWith('aprovar')) {
 
-  const temPermissao = interaction.member.roles.cache.some(role =>
-    config.cargosRecrutadores.includes(role.id)
-  );
+        const temPermissao = interaction.member.roles.cache.some(role =>
+          config.cargosRecrutadores.includes(role.id)
+        );
 
-  if (!temPermissao) {
-    return interaction.reply({
-      content: '❌ Sem permissão.',
-      flags: 64
-    });
-  }
+        if (!temPermissao) {
+          return interaction.reply({ content: '❌ Sem permissão.', flags: 64 });
+        }
 
-  await interaction.deferUpdate();
+        await interaction.deferUpdate();
 
-  const cargoEscolhido = interaction.customId.split('_')[1];
-  const membro = interaction.guild.members.cache.get(interaction.channel.topic);
+        const cargoEscolhido = interaction.customId.split('_')[1];
+        const membro = interaction.guild.members.cache.get(interaction.channel.topic);
 
-  if (!membro) return;
+        if (!membro) return;
 
-  // ===== PEGAR DADOS DO EMBED =====
-  const embed = interaction.message.embeds[0];
+        const embed = interaction.message.embeds[0];
+        const getField = (n) => embed.data.fields.find(f => f.name === n)?.value || '';
 
-  const getField = (name) =>
-    embed.data.fields.find(f => f.name === name)?.value || '';
+        const id = getField('ID');
+        const vulgo = getField('Vulgo');
 
-  const id = getField('ID');
-  const vulgo = getField('Vulgo');
+        const sistema = config.cargosSistema[cargoEscolhido];
+        if (!sistema) return console.log('⚠️ Cargo não configurado');
 
-  // ===== DEFINIR NOME DO CARGO =====
-  let nomeCargo = 'Membro';
+        let nickname = `[${sistema.nome}] ${id} | ${vulgo}`;
+        if (nickname.length > 32) nickname = `[${sistema.nome}] ${vulgo}`.slice(0, 32);
 
-  if (cargoEscolhido === config.cargoAviaozinho) {
-    nomeCargo = 'Aviãozinho';
-  }
+        await membro.setNickname(nickname).catch(() => {});
 
-  // ===== FORMATAR APELIDO =====
-  let nickname = `[${nomeCargo}] ${id} | ${vulgo}`;
+        await membro.roles.add(config.cargoAprovado);
+        await membro.roles.remove(config.cargoRemover);
+        await membro.roles.add(cargoEscolhido);
 
-  if (nickname.length > 32) {
-    nickname = `[${nomeCargo}] ${vulgo}`.slice(0, 32);
-  }
+        if (sistema.extra) await membro.roles.add(sistema.extra);
 
-  await membro.setNickname(nickname).catch(() => {});
+        const log = interaction.guild.channels.cache.get(config.logAprovacoes);
+        if (log) {
+          log.send(`✅ ${membro.user.tag} aprovado por ${interaction.user.tag}\nCargo: ${sistema.nome}\nApelido: ${nickname}`);
+        }
 
-  // ===== CARGOS BASE =====
-  await membro.roles.add(config.cargoAprovado);
-  await membro.roles.remove(config.cargoRemover);
-  await membro.roles.add(cargoEscolhido);
+        await interaction.message.edit({ content: '✅ Aprovado!', components: [] });
 
-  // ===== CARGOS EXTRAS AUTOMÁTICOS =====
-  if (cargoEscolhido === config.cargoMembro) {
-    await membro.roles.add(config.cargoExtraMembro);
-  }
-
-  if (cargoEscolhido === config.cargoAviaozinho) {
-    await membro.roles.add(config.cargoExtraAviao);
-  }
-
-  // ===== LOG =====
-  const log = interaction.guild.channels.cache.get(config.logAprovacoes);
-  if (log) {
-    log.send(`✅ ${membro.user.tag} aprovado por ${interaction.user.tag}\nApelido: ${nickname}`);
-  }
-
-  await interaction.message.edit({
-    content: '✅ Aprovado!',
-    components: []
-  });
-
-  setTimeout(() => interaction.channel.delete(), 5000);
-}
+        setTimeout(() => interaction.channel.delete().catch(() => {}), 5000);
+      }
 
       // ===== REPROVAR =====
       if (interaction.isButton() && interaction.customId === 'reprovar') {
@@ -289,28 +241,19 @@ if (interaction.isButton() && interaction.customId.startsWith('aprovar')) {
         );
 
         if (!temPermissao) {
-          return interaction.reply({
-            content: '❌ Sem permissão.',
-            flags: 64
-          });
+          return interaction.reply({ content: '❌ Sem permissão.', flags: 64 });
         }
 
-        await interaction.update({
-          content: '❌ Reprovado!',
-          components: []
-        });
+        await interaction.update({ content: '❌ Reprovado!', components: [] });
 
-        setTimeout(() => interaction.channel.delete(), 5000);
+        setTimeout(() => interaction.channel.delete().catch(() => {}), 5000);
       }
 
     } catch (err) {
-      console.error('💥 ERRO GERAL:', err);
+      console.error('💥 ERRO:', err);
 
       if (interaction && !interaction.replied) {
-        interaction.reply({
-          content: '❌ Ocorreu um erro.',
-          flags: 64
-        }).catch(() => {});
+        interaction.reply({ content: '❌ Erro.', flags: 64 }).catch(() => {});
       }
     }
   });
