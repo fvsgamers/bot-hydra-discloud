@@ -14,9 +14,9 @@ module.exports = {
 
     // IDs dos cargos que PODEM usar o comando
     const cargosPermitidos = [
-      '1483885950928027748',
-      '1483886170495516734',
-      '1485735984967716976'
+      '1489673130820501544',
+      '1485779006325395606',
+      '1485783504250867803'
     ];
 
     const membro = interaction.member;
