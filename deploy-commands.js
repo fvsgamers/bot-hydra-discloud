@@ -1,4 +1,5 @@
 require('dotenv').config();
+console.log('TOKEN NO DEPLOY:', process.env.TOKEN);
 const { REST, Routes } = require('discord.js');
 const fs = require('fs');
 const config = require('./config.json');
