@@ -172,7 +172,8 @@ module.exports = (client) => {
               { name: 'Vulgo', value: dados.vulgo },
               { name: 'ID', value: dados.id },
               { name: 'Telefone', value: dados.telefone },
-              { name: 'Cargo', value: role ? role.name : dados.cargo }
+              { name: 'Cargo', value: role ? role.name : dados.cargo },
+              { name: 'Recrutador', value: role ? role.name : dados.recrutador }
             );
 
           const botoes = new ActionRowBuilder().addComponents(
