@@ -120,10 +120,26 @@ module.exports = (client) => {
             .setPlaceholder('Selecione o cargo')
             .addOptions(cargosOptions)
         );
+      //Cidades
+        const cargosOptions1 = Object.entries(config.cargosCidades)
+          .map(([id, data]) => {
+            const role = interaction.guild.roles.cache.get(id);
+            return {
+              label: role ? role.name : data.nome,
+              value: id
+            };
+          });
+
+        const selectCidade = new ActionRowBuilder().addComponents(
+          new StringSelectMenuBuilder()
+            .setCustomId('select_cidade')
+            .setPlaceholder('Selecione a cidade')
+            .addOptions(cargosOptions1)
+        );
 
         return interaction.reply({
           content: 'Selecione recrutador e cargo:',
-          components: [selectRecrutador, selectCargo],
+          components: [selectRecrutador, selectCargo, selectCidade],
           flags: 64
         });
       }
@@ -139,6 +155,11 @@ module.exports = (client) => {
         if (interaction.customId === 'select_recrutador') {
           dados.recrutador = interaction.values[0];
           return interaction.reply({ content: '✅ Recrutador selecionado!', flags: 64 });
+        }
+
+        if (interaction.customId === 'select_cidade') {
+          dados.cidade = interaction.values[0];
+          return interaction.reply({ content: '✅ Cidade Selecionada!', flags: 64 });
         }
 
         if (interaction.customId === 'select_cargo') {
